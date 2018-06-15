@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"strconv"
 	"sync"
 	"time"
@@ -81,6 +83,25 @@ func (server *Server) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := w.Write(data)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// jsOn output all the keys in cache
+func (server *Server) List(w http.ResponseWriter, r *http.Request) {
+	data := make(map[string]string)
+	i := 0
+
+	server.lock.RLock()
+	for key := range server.Cache {
+		data[strconv.Itoa(i)] = key
+		i++
+	}
+	server.lock.RUnlock()
+
+	out, _ := json.Marshal(data)
+	_, err := w.Write(out)
 	if err != nil {
 		panic(err)
 	}

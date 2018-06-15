@@ -58,6 +58,7 @@ func buildRouter() http.Handler {
 
 	r.With(auth).Post("/objects/{key}", s.Upload)
 	r.Get("/objects/{key}", s.Get)
+	r.With(auth).Get("/objects", s.List)
 
 	return r
 }
