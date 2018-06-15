@@ -70,7 +70,8 @@ func TestObject(t *testing.T) {
 
 	// Custom expires after
 	ea := "400" // 400ms
-	rr = request("POST", "/test_expires", strings.NewReader(p), &dt, &ea)
+	content.Reset(p)
+	rr = request("POST", "/test_expires", content, &dt, &ea)
 	assertCode(t, rr, http.StatusNoContent, "obj:create_custom_expire")
 
 	deleteCustomTest := make(chan bool)
@@ -96,8 +97,13 @@ func TestObject(t *testing.T) {
 	testEa(strconv.Itoa(maxExpires+1), "obj:post_max_expire")
 
 	// Ensure list endpoint returns a JSON
-	listCustomTest := make(chan bool)
+	listTest := make(chan bool)
 	go func() {
+		expected := "test_list"
+		content.Reset(p)
+		rr := request("POST", "/" + expected, content, &dt, nil)
+		assertCode(t, rr, http.StatusNoContent, "obj:list_create")
+
 		rr = request("GET", "", nil, &token, nil)
 		assertCode(t, rr, http.StatusOK, "obj:list")
 
@@ -106,21 +112,23 @@ func TestObject(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Expect these keys in JSON response
-		expected := []string{"auth", "test", "test_expires"}
-		for i, val := range expected {
-			if res, exists := result[strconv.Itoa(i)]; !exists || res != val {
-				t.Errorf("Expected %s in JSON response, does not exist.", val)
+		found := false
+		for _, val := range result {
+			if val == expected {
+				found = true
+				break
 			}
 		}
-
-		listCustomTest <- true
+		if !found {
+			t.Errorf("Expected %s in JSON response, does not exist.", expected)
+		}
+		listTest <- true
 	}()
 
 	// Clean up "parallel" tests
 	<-deleteTest
 	<-deleteCustomTest
-	<-listCustomTest
+	<-listTest
 }
 
 // save a few code-duplication-trees

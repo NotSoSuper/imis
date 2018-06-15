@@ -87,7 +87,7 @@ func (server *Server) Get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// jsOn output all the keys in cache
+// List all the objects from the cache in JSON
 func (server *Server) List(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]string)
 	i := 0
